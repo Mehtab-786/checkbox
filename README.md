@@ -35,10 +35,3 @@ Approach:
    * Listen for the broadcast.
    * Find the checkbox by its ID.
    * Update its checked state.
-
-That's the overall approach. Your instructor is likely trying to teach:
-
-* DOM creation with loops
-* State management
-* Socket.IO events
-* Synchronizing UI across multiple clients
