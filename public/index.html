@@ -50,19 +50,18 @@
 
         let dummyData = [];
 
-        // socket.emit("initial-data", dummyData)
-        socket.on('initial-data', async (data) => {
+        window.addEventListener('load', async () => {
+            const response = await fetch('/checkboxes', { method: 'GET' })
+            const { data } = await response.json()
             dummyData = data
             loadCheckboxes(data)
-        }
-        )
+        })
 
         socket.on('updated-checkbox', (data) => {
             let element = document.querySelector(`[data-id="${data.id}"]`)
             if (element) element.checked = data.isChecked
 
-            dummyData = dummyData.map(item => item.id === data.id ? { ...item, isChecked: newValue } : item)
-
+            dummyData = dummyData.map(item => item.id === data.id ? { ...item, isChecked: data.isChecked } : item)
         })
 
         function loadCheckboxes(data) {
