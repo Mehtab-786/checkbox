@@ -5,41 +5,432 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Checkboxes</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        body {
-            font-family: system-ui, -apple-system, sans-serif;
-            background-color: #0f172a;
-            color: #f8fafc;
-            padding: 2.5rem;
-            margin: 0;
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
         }
 
-        h1 {
-            font-size: 2rem;
-            font-weight: 700;
-            margin-top: 0;
-            margin-bottom: 1.5rem;
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background-color: #06080f;
+            color: #e2e8f0;
+            padding: 0;
+            margin: 0;
+            min-height: 100vh;
+            background-image:
+                radial-gradient(ellipse 80% 50% at 50% -20%, rgba(99, 102, 241, 0.15), transparent),
+                radial-gradient(ellipse 60% 40% at 80% 100%, rgba(139, 92, 246, 0.08), transparent);
+        }
+
+        /* ── Header ── */
+        .app-header {
+            padding: 2rem 2.5rem 0;
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+
+        .app-header h1 {
+            font-size: 2.25rem;
+            font-weight: 800;
+            margin: 0 0 0.35rem;
+            background: linear-gradient(135deg, #c7d2fe 0%, #818cf8 50%, #a78bfa 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: -0.03em;
+        }
+
+        .app-header .subtitle {
+            font-size: 0.875rem;
+            color: #64748b;
+            margin: 0 0 1.75rem;
+            font-weight: 400;
+        }
+
+        /* ── Stats bar ── */
+        .stats-bar {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.75rem;
+            flex-wrap: wrap;
+        }
+
+        .stat-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            border-radius: 999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            letter-spacing: 0.02em;
+            text-transform: uppercase;
+            border: 1px solid rgba(99, 102, 241, 0.2);
+            background: rgba(99, 102, 241, 0.06);
+            color: #a5b4fc;
+        }
+
+        .stat-chip .dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: #22c55e;
+            box-shadow: 0 0 6px rgba(34, 197, 94, 0.6);
+            animation: pulse-dot 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse-dot {
+
+            0%,
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+
+            50% {
+                opacity: 0.5;
+                transform: scale(0.8);
+            }
+        }
+
+        /* ── Checkbox Grid ── */
+        .grid-wrapper {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 0 2.5rem 3rem;
         }
 
         #container {
             display: flex;
             flex-wrap: wrap;
-            gap: 12px;
-            max-width: 1000px;
+            gap: 10px;
+            padding: 1.5rem;
+            border-radius: 16px;
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid rgba(99, 102, 241, 0.1);
+            backdrop-filter: blur(12px);
+            box-shadow:
+                0 0 0 1px rgba(99, 102, 241, 0.05),
+                0 4px 24px rgba(0, 0, 0, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.03);
         }
 
         input[type="checkbox"] {
-            width: 30px;
-            height: 30px;
+            -webkit-appearance: none;
+            appearance: none;
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            border: 2px solid rgba(100, 116, 139, 0.3);
+            background: rgba(15, 23, 42, 0.8);
             cursor: pointer;
-            accent-color: #6366f1;
+            position: relative;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            outline: none;
+        }
+
+        input[type="checkbox"]:hover {
+            border-color: rgba(99, 102, 241, 0.5);
+            background: rgba(99, 102, 241, 0.08);
+            transform: scale(1.1);
+            box-shadow: 0 0 12px rgba(99, 102, 241, 0.15);
+        }
+
+        input[type="checkbox"]:checked {
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            border-color: transparent;
+            box-shadow:
+                0 0 10px rgba(99, 102, 241, 0.35),
+                0 2px 8px rgba(99, 102, 241, 0.2);
+            animation: check-pop 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        input[type="checkbox"]:checked::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 10px;
+            height: 5px;
+            border-left: 2.5px solid #fff;
+            border-bottom: 2.5px solid #fff;
+            transform: translate(-50%, -60%) rotate(-45deg);
+        }
+
+        input[type="checkbox"]:active {
+            transform: scale(0.92);
+        }
+
+        @keyframes check-pop {
+            0% {
+                transform: scale(0.85);
+            }
+
+            50% {
+                transform: scale(1.15);
+            }
+
+            100% {
+                transform: scale(1);
+            }
+        }
+
+        /* ── Toast Notification ── */
+        #toast-container {
+            position: fixed;
+            top: 1.5rem;
+            right: 1.5rem;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            pointer-events: none;
+        }
+
+        .toast {
+            pointer-events: auto;
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+            padding: 1rem 1.25rem;
+            min-width: 320px;
+            max-width: 420px;
+            border-radius: 12px;
+            background: rgba(15, 23, 42, 0.92);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(239, 68, 68, 0.25);
+            box-shadow:
+                0 8px 32px rgba(0, 0, 0, 0.5),
+                0 0 0 1px rgba(239, 68, 68, 0.08),
+                inset 0 1px 0 rgba(255, 255, 255, 0.04);
+            animation: toast-slide-in 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            transform: translateX(120%);
+            opacity: 0;
+        }
+
+        .toast.toast-hiding {
+            animation: toast-slide-out 0.35s cubic-bezier(0.4, 0, 1, 1) forwards;
+        }
+
+        .toast-icon {
+            flex-shrink: 0;
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            background: rgba(239, 68, 68, 0.12);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+        }
+
+        .toast-icon svg {
+            width: 18px;
+            height: 18px;
+            stroke: #f87171;
+            fill: none;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        .toast-body {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .toast-title {
+            font-size: 0.8125rem;
+            font-weight: 700;
+            color: #f87171;
+            margin: 0 0 0.2rem;
+            letter-spacing: 0.01em;
+        }
+
+        .toast-message {
+            font-size: 0.75rem;
+            color: #94a3b8;
+            margin: 0;
+            line-height: 1.45;
+        }
+
+        .toast-close {
+            flex-shrink: 0;
+            background: none;
+            border: none;
+            color: #475569;
+            cursor: pointer;
+            padding: 0.2rem;
+            border-radius: 6px;
+            line-height: 1;
+            font-size: 1rem;
+            transition: all 0.15s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 24px;
+            height: 24px;
+        }
+
+        .toast-close:hover {
+            background: rgba(239, 68, 68, 0.1);
+            color: #f87171;
+        }
+
+        .toast-progress {
+            position: absolute;
+            bottom: 0;
+            left: 12px;
+            right: 12px;
+            height: 3px;
+            border-radius: 0 0 12px 12px;
+            overflow: hidden;
+        }
+
+        .toast-progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #ef4444, #f97316);
+            border-radius: 3px;
+            animation: toast-timer 4s linear forwards;
+        }
+
+        /* Toast for success variant */
+        .toast.toast-success {
+            border-color: rgba(34, 197, 94, 0.25);
+        }
+
+        .toast.toast-success .toast-icon {
+            background: rgba(34, 197, 94, 0.12);
+        }
+
+        .toast.toast-success .toast-icon svg {
+            stroke: #4ade80;
+        }
+
+        .toast.toast-success .toast-title {
+            color: #4ade80;
+        }
+
+        .toast.toast-success .toast-progress-bar {
+            background: linear-gradient(90deg, #22c55e, #10b981);
+        }
+
+        /* Toast for warning variant */
+        .toast.toast-warning {
+            border-color: rgba(245, 158, 11, 0.25);
+        }
+
+        .toast.toast-warning .toast-icon {
+            background: rgba(245, 158, 11, 0.12);
+        }
+
+        .toast.toast-warning .toast-icon svg {
+            stroke: #fbbf24;
+        }
+
+        .toast.toast-warning .toast-title {
+            color: #fbbf24;
+        }
+
+        .toast.toast-warning .toast-progress-bar {
+            background: linear-gradient(90deg, #f59e0b, #eab308);
+        }
+
+        @keyframes toast-slide-in {
+            from {
+                transform: translateX(120%);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes toast-slide-out {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+
+            to {
+                transform: translateX(120%);
+                opacity: 0;
+            }
+        }
+
+        @keyframes toast-timer {
+            from {
+                width: 100%;
+            }
+
+            to {
+                width: 0%;
+            }
+        }
+
+        /* ── Responsive ── */
+        @media (max-width: 640px) {
+            .app-header {
+                padding: 1.5rem 1.25rem 0;
+            }
+
+            .grid-wrapper {
+                padding: 0 1.25rem 2rem;
+            }
+
+            #container {
+                gap: 8px;
+                padding: 1rem;
+            }
+
+            input[type="checkbox"] {
+                width: 26px;
+                height: 26px;
+                border-radius: 6px;
+            }
+
+            #toast-container {
+                top: 1rem;
+                right: 1rem;
+                left: 1rem;
+            }
+
+            .toast {
+                min-width: unset;
+                max-width: unset;
+                width: 100%;
+            }
         }
     </style>
 </head>
 
 <body>
-    <h1>Checkboxes</h1>
-    <div id="container"></div>
+    <!-- Toast Container -->
+    <div id="toast-container"></div>
+
+    <header class="app-header">
+        <h1>Checkboxes</h1>
+        <p class="subtitle">Real-time collaborative checkbox grid &mdash; powered by WebSockets</p>
+        <div class="stats-bar">
+            <span class="stat-chip">
+                <span class="dot"></span>
+                Live
+            </span>
+            <span class="stat-chip">100 Checkboxes</span>
+            <span class="stat-chip">~5s Rate Limit</span>
+        </div>
+    </header>
+
+    <div class="grid-wrapper">
+        <div id="container"></div>
+    </div>
 
 
     <script src="/socket.io/socket.io.js"></script>
@@ -56,6 +447,25 @@
             dummyData = data
             loadCheckboxes(data)
         })
+
+        socket.on('server:error', (data) => {
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.innerHTML = `
+        <div class="toast-icon">
+            <svg><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        </div>
+        <div class="toast-body">
+            <p class="toast-title">Rate Limited</p>
+            <p class="toast-message">${data}</p>
+        </div>
+        <button class="toast-close" onclick="this.parentElement.remove()">✕</button>
+        <div class="toast-progress"><div class="toast-progress-bar"></div></div>
+    `;
+            document.getElementById('toast-container').appendChild(toast);
+            setTimeout(() => toast.remove(), 4000);
+        });
+
 
         socket.on('updated-checkbox', (data) => {
             let element = document.querySelector(`[data-id="${data.id}"]`)

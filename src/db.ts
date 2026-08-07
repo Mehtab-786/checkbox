@@ -1,4 +1,4 @@
-type dbObject = {
+export type dbObject = {
     id: number;
     isChecked: boolean;
 }
