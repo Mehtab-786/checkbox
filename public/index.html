@@ -52,38 +52,6 @@
             font-weight: 400;
         }
 
-        /* ── Stats bar ── */
-        .stats-bar {
-            display: flex;
-            gap: 1rem;
-            margin-bottom: 1.75rem;
-            flex-wrap: wrap;
-        }
-
-        .stat-chip {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            padding: 0.5rem 1rem;
-            border-radius: 999px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            letter-spacing: 0.02em;
-            text-transform: uppercase;
-            border: 1px solid rgba(99, 102, 241, 0.2);
-            background: rgba(99, 102, 241, 0.06);
-            color: #a5b4fc;
-        }
-
-        .stat-chip .dot {
-            width: 6px;
-            height: 6px;
-            border-radius: 50%;
-            background: #22c55e;
-            box-shadow: 0 0 6px rgba(34, 197, 94, 0.6);
-            animation: pulse-dot 2s ease-in-out infinite;
-        }
-
         @keyframes pulse-dot {
 
             0%,
@@ -100,7 +68,7 @@
 
         /* ── Checkbox Grid ── */
         .grid-wrapper {
-            max-width: 1100px;
+            max-width: 1200px;
             margin: 0 auto;
             padding: 0 2.5rem 3rem;
         }
@@ -108,8 +76,8 @@
         #container {
             display: flex;
             flex-wrap: wrap;
-            gap: 10px;
-            padding: 1.5rem;
+            gap: 5px;
+            padding: 1rem;
             border-radius: 16px;
             background: rgba(15, 23, 42, 0.6);
             border: 1px solid rgba(99, 102, 241, 0.1);
@@ -123,9 +91,9 @@
         input[type="checkbox"] {
             -webkit-appearance: none;
             appearance: none;
-            width: 32px;
-            height: 32px;
-            border-radius: 8px;
+            width: 22px;
+            height: 22px;
+            border-radius: 4px;
             border: 2px solid rgba(100, 116, 139, 0.3);
             background: rgba(15, 23, 42, 0.8);
             cursor: pointer;
@@ -417,15 +385,7 @@
 
     <header class="app-header">
         <h1>Checkboxes</h1>
-        <p class="subtitle">Real-time collaborative checkbox grid &mdash; powered by WebSockets</p>
-        <div class="stats-bar">
-            <span class="stat-chip">
-                <span class="dot"></span>
-                Live
-            </span>
-            <span class="stat-chip">100 Checkboxes</span>
-            <span class="stat-chip">~5s Rate Limit</span>
-        </div>
+        <p class="subtitle">Real-time collaborative checkbox grid</p>
     </header>
 
     <div class="grid-wrapper">
@@ -448,7 +408,7 @@
             loadCheckboxes(data)
         })
 
-        socket.on('server:error', (data) => {
+        function showToast(data) {
             const toast = document.createElement('div');
             toast.className = 'toast';
             toast.innerHTML = `
@@ -464,36 +424,63 @@
     `;
             document.getElementById('toast-container').appendChild(toast);
             setTimeout(() => toast.remove(), 4000);
+        }
+
+        socket.on('server:error', (data) => {
+            showToast(data)
         });
 
 
         socket.on('updated-checkbox', (data) => {
-            let element = document.querySelector(`[data-id="${data.id}"]`)
-            if (element) element.checked = data.isChecked
+            let element = document.querySelector(`[data-id="${data.idx}"]`)
+            if (element) element.checked = data.item
 
-            dummyData = dummyData.map(item => item.id === data.id ? { ...item, isChecked: data.isChecked } : item)
+            dummyData[data.idx] = data.item
         })
 
         function loadCheckboxes(data) {
-            try {
-                const items = data || [];
+            container.innerHTML = '';
+            const total = data.length;
+            const chunkSize = 250; // Render 250 at a time
+            let currentIndex = 0;
 
-                container.innerHTML = '';
-                items.forEach(item => {
+            function renderChunk() {
+                const fragment = document.createDocumentFragment();
+                const end = Math.min(currentIndex + chunkSize, total);
+
+                for (let i = currentIndex; i < end; i++) {
                     const checkbox = document.createElement('input');
                     checkbox.type = 'checkbox';
-                    checkbox.checked = item.isChecked;
-                    checkbox.dataset.id = item.id
+                    checkbox.checked = Boolean(data[i]);
+                    checkbox.dataset.id = i;
                     checkbox.addEventListener('change', () => {
-                        item.isChecked = checkbox.checked;
-                        socket.emit('checkbox-update', item)
+                        const isChecked = checkbox.checked;
 
+                        socket.emit('checkbox-update', { item: isChecked, idx: i }, (response) => {
+                            if (!response || !response.success) {
+                                // Revert DOM and local state on failure
+                                checkbox.checked = !isChecked;
+                                dummyData[i] = !isChecked;
+                                showToast(response.message);
+                            } else {
+                                dummyData[i] = isChecked;
+                            }
+                        });
                     });
-                    container.appendChild(checkbox);
-                });
-            } catch (err) {
-                console.error('Error loading data:', err);
+
+                    fragment.appendChild(checkbox);
+                }
+
+                container.appendChild(fragment);
+                currentIndex = end;
+
+                // Continue rendering next chunk on the next animation frame
+                if (currentIndex < total) {
+                    requestAnimationFrame(renderChunk);
+                }
             }
+
+            renderChunk();
         }
 
     </script>

@@ -1,37 +1,91 @@
-Approach:
+### Phase 1 — Basic Express Server ✅
+**Goal:** Make sure Express works.
 
-1. Create an array of states.
+- Initialize Express + TypeScript.
+- Create `src/index.ts`.
+- Serve static files from `public/`.
+- `GET /` → return `index.html`.
+- Verify the page opens in the browser.
 
-   ```js
-   const states = new Array(1000).fill(false);
-   ```
+---
 
-2. Use a loop to generate 1000 checkboxes dynamically.
+### Phase 2 — In-Memory State (No Socket.IO Yet) ✅
+**Goal:** Render checkboxes from server state.
 
-3. Give each checkbox a unique ID/index.
+- Create an in-memory array.
+  ```js
+  [
+    { id: 1, checked: false },
+    { id: 2, checked: true },
+    ...
+  ]
+  ```
+- Create an API:
+  - `GET /checkboxes`
+- Frontend:
+  - Fetch the array.
+  - Loop through it.
+  - Render checkboxes.
+- **Do not worry about updating them yet.**
 
-   ```html
-   <input type="checkbox" data-id="0">
-   ```
+> **Change:** I would only display the data in this phase. Don't add updates yet.
 
-4. Attach a `change` event listener to each checkbox.
+---
 
-5. When a checkbox changes:
+### Phase 3 — Add Socket.IO ✅
+**Goal:** Real-time synchronization.
 
-   * Update its state in the array.
-   * Emit a Socket.IO event with:
+- Integrate Socket.IO.
+- When a checkbox changes:
+  - Emit `{ id, checked }`.
+- Server:
+  - Update the in-memory array.
+  - Broadcast the change.
+- Clients:
+  - Listen for updates.
+  - Update only the changed checkbox.
 
-     * checkbox ID
-     * new checked value
+---
 
-6. On the server:
+### Phase 4 — Persist Data in MongoDB ✅
+**Goal:** Replace the in-memory array.
 
-   * Receive the event.
-   * Update the server's copy of the state.
-   * Broadcast the change to all connected clients.
+- Create a MongoDB collection.
+- On server startup:
+  - Load checkbox states from MongoDB.
+- When a checkbox changes:
+  - Update MongoDB.
+  - Update in-memory state (or use MongoDB directly if you prefer).
+- New clients:
+  - Receive the latest state.
 
-7. On every client:
+---
 
-   * Listen for the broadcast.
-   * Find the checkbox by its ID.
-   * Update its checked state.
+## Final Roadmap
+
+```
+Phase 1
+├── Express server
+├── Serve static files
+└── Show index.html
+
+Phase 2
+├── In-memory array
+├── GET /checkboxes
+├── Frontend fetches data
+└── Render 1000 checkboxes
+
+Phase 3
+├── Socket.IO
+├── Emit checkbox changes
+├── Update server state
+└── Broadcast to all clients
+
+Phase 4
+├── MongoDB
+├── Persist checkbox states
+├── Load state on startup
+└── Keep Socket.IO in sync
+```
+
+This progression is incremental: **first server → then rendering → then real-time updates → then persistence**. Each phase builds on the previous one without introducing multiple new concepts at once.

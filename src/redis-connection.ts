@@ -1,14 +1,12 @@
 import { Redis } from "ioredis";
 
-function creatRedisConnection() {
-    return new Redis({
-        host: 'localhost',
-        port: 6379,
-    })
+
+function createRedisConnection() {
+    return new Redis(process.env.REDIS_URL as string);
 }
 
-export const redis = creatRedisConnection()
+export const redis = createRedisConnection()
 
-export const publisher = creatRedisConnection();
-export const subscriber = creatRedisConnection();
+export const publisher = createRedisConnection();
+export const subscriber = createRedisConnection();
 

@@ -5,25 +5,21 @@ import express from 'express';
 import path from 'node:path';
 import http from 'node:http';
 import { Server } from 'socket.io';
-const PORT = process.env.PORT || 3000
+const PORT = process.env.PORT || 8080
 
 const app = express();
 
 app.use(express.json());
 app.use(express.static(path.resolve('./public')))
 
+let dummyData = Array(1000).fill(false)
 
-
-import { dummyData, updateCheckbox, type dbObject } from "./db.js";
 import { publisher, redis, subscriber } from "./redis-connection.js";
 const server = http.createServer(app)
 const io = new Server()
 io.attach(server)
 
-const CHECKBOX_KEY = 'checkboxKey'
-
-const rateLimitingMap = new Map()
-
+const CHECKBOX_KEY = 'new-checkboxKey';
 
 app.get('/health', (req, res) => {
     return res.json({ healthy: true, message: 'Server is healthy' })
@@ -36,8 +32,6 @@ async function startServer() {
     subscriber.on("message", async (channel, message) => {
         if (channel == "updated-checkbox") {
             const data = JSON.parse(message)
-            // await updateCheckbox(data.id, data.isChecked)
-
             io.emit("updated-checkbox", data)
         }
     })
@@ -45,32 +39,43 @@ async function startServer() {
     io.on('connection', (socket) => {
         console.log(`User connected: ${socket.id}`);
 
-        socket.on('checkbox-update', async (data) => {
+        socket.on('checkbox-update', async (data, ack) => {
 
             const lastOperationTime = await redis.get(`rateLimit:${socket.id}`)
 
             if (lastOperationTime) {
                 const timeGap = Date.now() - parseInt(lastOperationTime)
                 if (timeGap < 5.5 * 1000) {
-                    socket.emit("server:error", "Too many requests!")
+                    if (typeof ack == 'function') {
+                        ack({ success: false, message: 'Too many requests!' })
+                    }
                     return;
+
                 }
 
             }
-            await redis.set(`rateLimit:${socket.id}`, Date.now())
+            await redis.set(`rateLimit:${socket.id}`, Date.now(), 'EX', 10)
 
 
             const existingState = await redis.get(CHECKBOX_KEY)
             if (existingState) {
                 let remoteData = JSON.parse(existingState)
-                remoteData = remoteData.map((item: dbObject) => item.id === data.id ? { ...item, isChecked: data.isChecked } : item)
+                if (typeof data.item === "boolean") {
+                    remoteData[data.idx] = data.item
+                }
+
                 await redis.set(CHECKBOX_KEY, JSON.stringify(remoteData))
 
             } else {
-                const updateData = dummyData.map((item: dbObject) => item.id === data.id ? { ...item, isChecked: data.isChecked } : item)
+                let updateData = [...dummyData]
+                updateData[data.idx] = data.item
                 await redis.set(CHECKBOX_KEY, JSON.stringify(updateData))
             }
             await publisher.publish("updated-checkbox", JSON.stringify(data))
+
+            if (typeof ack === 'function') {
+                ack({ success: true })
+            }
         })
     })
 
