@@ -1,10 +1,15 @@
 import { configDotenv } from "dotenv";
 configDotenv();
 
-import express from 'express';
+import express, { type Request, type Response } from 'express';
+
+import { type RedisKey } from 'ioredis'
 import path from 'node:path';
 import http from 'node:http';
+import { pool } from "./db/index.js";
 import { Server } from 'socket.io';
+import { publisher, redis, subscriber } from "./redis-connection.js";
+
 const PORT = process.env.PORT || 8080
 
 const app = express();
@@ -12,20 +17,30 @@ const app = express();
 app.use(express.json());
 app.use(express.static(path.resolve('./public')))
 
-let dummyData = Array(1000).fill(false)
 
-import { publisher, redis, subscriber } from "./redis-connection.js";
+let dbData: boolean[] = []
+
+
 const server = http.createServer(app)
 const io = new Server()
 io.attach(server)
 
-const CHECKBOX_KEY = 'new-checkboxKey';
+const CHECKBOX_KEY = process.env.CHECKBOX_KEY as RedisKey;
 
-app.get('/health', (req, res) => {
+app.get('/health', (req: Request, res: Response) => {
     return res.json({ healthy: true, message: 'Server is healthy' })
 })
 
 async function startServer() {
+
+    let result = await pool.query('select position,checked from checkboxes order by position');
+    dbData = result.rows.map(item => item.checked);
+
+    const cached = await redis.get(CHECKBOX_KEY)
+    if (!cached) {
+        await redis.set(CHECKBOX_KEY, JSON.stringify(dbData))
+    }
+
 
     await subscriber.subscribe('updated-checkbox')
 
@@ -67,10 +82,12 @@ async function startServer() {
                 await redis.set(CHECKBOX_KEY, JSON.stringify(remoteData))
 
             } else {
-                let updateData = [...dummyData]
+                let updateData = [...dbData]
                 updateData[data.idx] = data.item
                 await redis.set(CHECKBOX_KEY, JSON.stringify(updateData))
             }
+
+            await pool.query(`UPDATE checkboxes SET checked=$1 WHERE position =$2`, [data.item, data.idx + 1])
             await publisher.publish("updated-checkbox", JSON.stringify(data))
 
             if (typeof ack === 'function') {
@@ -79,13 +96,13 @@ async function startServer() {
         })
     })
 
-    app.get('/checkboxes', async (req, res) => {
+    app.get('/checkboxes', async (req: Request, res: Response) => {
         const existingState = await redis.get(CHECKBOX_KEY)
         if (existingState) {
             let remoteData = JSON.parse(existingState)
             return res.json({ data: remoteData })
         }
-        return res.json({ data: dummyData })
+        return res.json({ data: dbData })
     })
 
 
